@@ -5,10 +5,11 @@
 #include <thread>
 #include <mutex>
 #include <memory>
+#include <string>
+#include <deque> // Adicionado para o histórico
 #include "client_handler.h"
 #include "../libtslog/tslog.h"
 
-// Forward declaration para evitar dependência circular
 class ClientHandler;
 
 class Server {
@@ -19,20 +20,25 @@ public:
     void start();
     void stop();
 
-    // Transmite uma mensagem para todos os clientes conectados
     void broadcastMessage(const std::string& message, int sender_socket);
-    
-    // Remove um cliente da lista de clientes ativos
     void removeClient(int client_socket);
 
 private:
-    void acceptConnections(); // Loop para aceitar novas conexões
+    void acceptConnections();
+    void sendHistoryToClient(int client_socket); // Novo método
 
     int m_port;
     int m_server_socket;
     bool m_running;
+    
+    // Estruturas compartilhadas
     std::vector<std::unique_ptr<ClientHandler>> m_clients;
-    std::mutex m_clients_mutex; // Mutex para proteger a lista m_clients
+    std::mutex m_clients_mutex;
+
+    std::deque<std::string> m_message_history;
+    std::mutex m_history_mutex;
+    const size_t MAX_HISTORY_SIZE = 20; // Guardar as últimas 20 mensagens
+    
     std::thread m_accept_thread;
 };
 

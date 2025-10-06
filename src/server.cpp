@@ -40,7 +40,7 @@ void Server::start() {
     TSLOG_INFO("Servidor escutando...");
 
     m_accept_thread = std::thread(&Server::acceptConnections, this);
-    m_accept_thread.join(); // Mantém o servidor rodando
+    m_accept_thread.join();
 }
 
 void Server::stop() {
@@ -60,6 +60,11 @@ void Server::acceptConnections() {
         }
 
         TSLOG_INFO("Nova conexao aceita. Socket: " + std::to_string(client_socket));
+        
+        // --- MODIFICAÇÃO ETAPA 3 ---
+        // Envia o histórico de mensagens para o novo cliente
+        sendHistoryToClient(client_socket);
+        // --- FIM DA MODIFICAÇÃO ---
 
         std::lock_guard<std::mutex> lock(m_clients_mutex);
         m_clients.push_back(std::make_unique<ClientHandler>(client_socket, this));
@@ -68,11 +73,23 @@ void Server::acceptConnections() {
 }
 
 void Server::broadcastMessage(const std::string& message, int sender_socket) {
+    // --- MODIFICAÇÃO ETAPA 3 ---
+    // Salva a mensagem no histórico de forma segura
+    {
+        std::lock_guard<std::mutex> lock(m_history_mutex);
+        m_message_history.push_back(message);
+        if (m_message_history.size() > MAX_HISTORY_SIZE) {
+            m_message_history.pop_front(); // Remove a mais antiga se o histórico estiver cheio
+        }
+    }
+    // --- FIM DA MODIFICAÇÃO ---
+
     std::lock_guard<std::mutex> lock(m_clients_mutex);
     TSLOG_INFO("Broadcast da mensagem de socket " + std::to_string(sender_socket) + ": " + message);
     for (const auto& client : m_clients) {
         if (client->getSocket() != sender_socket) {
-            client->sendMessage(message);
+            // Adicionado "\n" para que cada mensagem apareça em uma nova linha no cliente
+            client->sendMessage(message + "\n");
         }
     }
 }
@@ -89,5 +106,22 @@ void Server::removeClient(int client_socket) {
     if (it != m_clients.end()) {
         m_clients.erase(it, m_clients.end());
         TSLOG_INFO("Cliente com socket " + std::to_string(client_socket) + " removido.");
+    }
+}
+
+// --- NOVO MÉTODO DA ETAPA 3 ---
+void Server::sendHistoryToClient(int client_socket) {
+    std::lock_guard<std::mutex> lock(m_history_mutex);
+    if (!m_message_history.empty()) {
+        std::string history_header = "--- Histórico das últimas mensagens ---\n";
+        send(client_socket, history_header.c_str(), history_header.length(), 0);
+        
+        for (const auto& msg : m_message_history) {
+            std::string history_msg = msg + "\n";
+            send(client_socket, history_msg.c_str(), history_msg.length(), 0);
+        }
+
+        std::string history_footer = "--------------------------------------\n";
+        send(client_socket, history_footer.c_str(), history_footer.length(), 0);
     }
 }

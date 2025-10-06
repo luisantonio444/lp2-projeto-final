@@ -1,0 +1,10 @@
+[2025-10-06 20:14:10] [INFO] Iniciando o servidor na porta 8080
+[2025-10-06 20:14:10] [INFO] Servidor escutando...
+[2025-10-06 20:14:31] [INFO] Nova conexao aceita. Socket: 5
+[2025-10-06 20:14:34] [INFO] Broadcast da mensagem de socket 5: Cliente 5: oiiiiiiiiii
+[2025-10-06 20:14:46] [INFO] Nova conexao aceita. Socket: 6
+[2025-10-06 20:14:49] [INFO] Broadcast da mensagem de socket 6: Cliente 6: hellooooooo
+[2025-10-06 20:15:00] [INFO] Broadcast da mensagem de socket 6: Cliente 6: whats upppppp
+[2025-10-06 20:15:08] [INFO] Broadcast da mensagem de socket 5: Cliente 5: eai beleza??????
+[2025-10-06 20:17:35] [INFO] Cliente 6 desconectado.
+[2025-10-06 20:17:35] [INFO] Cliente com socket 6 removido.

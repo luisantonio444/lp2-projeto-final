@@ -1,0 +1,46 @@
+@startuml
+title Diagrama de Sequência - Conexão e Broadcast de Mensagem
+
+actor Cliente
+participant "Servidor" as S
+participant "Thread Aceitadora" as TA
+participant "Handler do Cliente" as HC
+
+Cliente -> S: Conectar(porta)
+activate S
+S ->> TA: Iniciar()
+activate TA
+TA -> TA: loop accept()
+
+... Cliente tenta conectar ...
+
+TA -> S: Nova Conexão (socket_cliente)
+S -> HC: new ClientHandler(socket_cliente, servidor)
+S ->> HC: startHandling()
+activate HC
+
+HC -> HC: loop de escuta por mensagens
+
+Cliente -> HC: EnviarMensagem("Olá!")
+activate HC
+HC -> S: broadcastMessage("Olá!", socket_cliente)
+activate S
+
+alt Para cada cliente conectado exceto o remetente
+    S -> "Outro Handler": sendMessage("[Cliente]: Olá!")
+end
+
+deactivate S
+deactivate HC
+
+... Cliente desconecta ...
+
+HC -> S: removeClient(socket_cliente)
+activate S
+S -> S: Fecha socket e remove handler da lista
+deactivate S
+deactivate HC
+deactivate TA
+deactivate S
+
+@enduml
